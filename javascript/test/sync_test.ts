@@ -454,6 +454,30 @@ describe('Data sync protocol', () => {
       assert.deepStrictEqual(getHeads(n1), getHeads(n2))
       assert.deepStrictEqual(n1, n2)
     })
+    
+    it('should not fail when a sync message is generated but not received', () => {
+      let n1 = Automerge.init<{x: number}>(), n2 = Automerge.init()
+      let s1 = initSyncState(), s2 = initSyncState()
+      let m1 = null, m2 = null
+      n1 = Automerge.change<{x: number}>(n1, doc => doc.x = 1)
+      ;[n1, n2, s1, s2] = sync(n1, n2, s1, s2)
+      n1 = Automerge.change<{x: number}>(n1, doc => doc.x = 2)
+      ;[s1, m1] = Automerge.generateSyncMessage(n1, s1)
+      ;[n1, n2, s1, s2] = sync(n1, n2, s1, s2)
+    });
+
+    it('should not fail when a sync message is generated but not received and a subsequent change has been made', () => {
+      let n1 = Automerge.init<{x: number}>(), n2 = Automerge.init()
+      let s1 = initSyncState(), s2 = initSyncState()
+      let m1 = null, m2 = null
+      n1 = Automerge.change<{x: number}>(n1, doc => doc.x = 1)
+      ;[n1, n2, s1, s2] = sync(n1, n2, s1, s2)
+      n1 = Automerge.change<{x: number}>(n1, doc => doc.x = 2)
+      ;[s1, m1] = Automerge.generateSyncMessage(n1, s1)
+      n1 = Automerge.change<{x: number}>(n1, doc => doc.x = 3)
+      ;[n1, n2, s1, s2] = sync(n1, n2, s1, s2)
+    });
+    
   })
 
   describe('with false positives', () => {
