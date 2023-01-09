@@ -29,6 +29,7 @@ jobs:
       - name: Remove tmp_branch if it exists
         run: git push origin :tmp_branch || true
       - run: git checkout -b tmp_branch
+      - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm install
       - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm run build
       - run: "mkdir"
         env:
