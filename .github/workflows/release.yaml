@@ -1,4 +1,4 @@
-name: ci
+name: Release
 on:
   push:
 #    branches:
@@ -29,6 +29,10 @@ jobs:
       - name: Remove tmp_branch if it exists
         run: git push origin :tmp_branch || true
       - run: git checkout -b tmp_branch
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli wasm-opt
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
       - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm install
       - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm run build
       - run: "mkdir"
