@@ -24,7 +24,7 @@ jobs:
       - uses: JiPaix/package-json-updated-action@v1.0.3
         id: version-updated
         with:
-          path: $GITHUB_WORKSPACE/rust/automerge-wasm/package.json
+          path: ${{ github.workspace }}/rust/automerge-wasm/package.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
