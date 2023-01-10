@@ -6,7 +6,7 @@ on:
 
 jobs:
   check_if_wasm_version_upgraded:
-    name: Check if version has been upgraded
+    name: Check if WASM version has been upgraded
     runs-on: ubuntu-latest
     outputs:
       wasm_version: ${{ steps.version-updated.outputs.current-package-version }}
@@ -44,14 +44,15 @@ jobs:
       - name: run wasm deno tests
         id: wasm_deno_tests
         run: ./scripts/ci/deno_tests
+      - name: Collate deno release files 
         if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
-      - run: |
+        run: |
           mkdir $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/deno/* $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/index.d.ts $GITHUB_WORKSPACE/deno_wasm_dist
-        env:
-          DRY_RUN: "0"
-      - run: |
+      - name: Create npm release
+        if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
+        run: |
           if [ "$(npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm show . version)" = "$VERSION" ]; then
             echo "This version is already published"
             exit 0
@@ -61,21 +62,24 @@ jobs:
             echo "Is pre-release version"
             EXTRA_ARGS="$EXTRA_ARGS --tag next"
           fi
-          if [ "$NODE_AUTH_TOKEN" = "" ]; then
-            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
-            false
-          fi
-          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
+#          if [ "$NODE_AUTH_TOKEN" = "" ]; then
+#            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
+#            false
+#          fi
+#          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
-      - run: |
+      - name: Commit wasm deno release files
+        run: |
           git config --global user.name "actions"
           git config --global user.email actions@github.com
           git add $GITHUB_WORKSPACE/deno_wasm_dist
           git commit -am "Add deno release files"
           git push origin tmp_branch
-      - uses: softprops/action-gh-release@v1
+      - name: Tag wasm release
+        if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
+        uses: softprops/action-gh-release@v1
         with:
           name: Automerge Wasm v${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
           tag_name: js/automerge-wasm-${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
