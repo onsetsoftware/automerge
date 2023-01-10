@@ -26,6 +26,7 @@ jobs:
     # We create release only if the version in the package.json has been upgraded
     if: needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated
     steps:
+      - uses: denoland/setup-deno@v1
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -43,7 +44,6 @@ jobs:
         run: ./scripts/ci/wasm_tests
       - name: run wasm deno tests
         id: wasm_deno_tests
-        uses: denoland/setup-deno@v1
         run: ./scripts/ci/deno_tests
       - name: Collate deno release files 
         if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
