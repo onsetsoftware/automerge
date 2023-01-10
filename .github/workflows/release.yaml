@@ -8,6 +8,28 @@ on:
       - main
 
 jobs:
+  
+  check_if_version_upgraded:
+    name: Check if version upgrade
+    # We run this only if it's a push on the default branch or if it's a PR from a 
+    # branch (meaning not a PR from a fork). It would be more straightforward to test if secrets.NPM_TOKEN is 
+    # defined but GitHub Action don't allow it yet.
+#    if: |
+#      github.event_name == 'push' || 
+#      github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login 
+    runs-on: ubuntu-latest
+    outputs:
+      from_version: ${{ steps.step1.outputs.from_version }}
+      to_version: ${{ steps.step1.outputs.to_version }}
+      is_upgraded_version: ${{ steps.step1.outputs.is_upgraded_version }}
+      is_pre_release: ${{steps.step1.outputs.is_pre_release }}
+    steps:
+      - uses: garronej/ts-ci@v2.1.0
+        id: step1
+        with:
+          action_name: is_package_json_version_upgraded
+          branch: ${{ github.head_ref || github.ref }}/rust/automerge-repo
+          
   check_if_wasm_version_upgraded:
     name: Check if version upgrade
     # We run this only if it's a push on the default branch or if it's a PR from a 
@@ -63,24 +85,21 @@ jobs:
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/index.d.ts $GITHUB_WORKSPACE/deno_wasm_dist
         env:
           DRY_RUN: "0"
-#      - run: |
-#          if [ "$(npm show . version)" = "$VERSION" ]; then
-#            echo "This version is already published"
-#            exit 0
-#          fi
-#          if [ "$NODE_AUTH_TOKEN" = "" ]; then
-#            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
-#            false
-#          fi
-#          EXTRA_ARGS=""
-#          if [ "$IS_PRE_RELEASE" = "true" ]; then
-#              EXTRA_ARGS="--tag next"
-#          fi
-#          npm publish $EXTRA_ARGS
-#        env:
-#          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-#          VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.to_version }}
-#          IS_PRE_RELEASE: ${{ needs.check_if_wasm_version_upgraded.outputs.is_pre_release }}
+      - run: |
+          if [ "$(npm show $GITHUB_WORKSPACE/rust/automerge-wasm/ version)" = "$VERSION" ]; then
+            echo "This version is already published"
+            exit 0
+          fi
+          if [ "$NODE_AUTH_TOKEN" = "" ]; then
+            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
+            false
+          fi
+          EXTRA_ARGS="--access public"
+          npm publish $EXTRA_ARGS
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
+          IS_PRE_RELEASE: ${{ needs.check_if_wasm_version_upgraded.outputs.is_pre_release }}
       - run: |
           git config --global user.name "actions"
           git config --global user.email actions@github.com
