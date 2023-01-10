@@ -29,7 +29,11 @@ jobs:
         with:
           action_name: is_package_json_version_upgraded
           branch: ${{ github.head_ref || github.ref }}/rust/automerge-wasm
-          
+      - name: print-result
+        env:
+          OUTCOME: ${{join(steps.step1.outputs.*, '\n')}}
+        run: |
+          echo "$OUTCOME"
   check_if_wasm_version_upgraded:
     name: Check if version upgrade
     # We run this only if it's a push on the default branch or if it's a PR from a 
