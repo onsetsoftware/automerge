@@ -5,25 +5,9 @@ on:
 #      - main
 
 jobs:
-  wasm_tests:
-    name: Build and test WASM js and deno
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: denoland/setup-deno@v1
-      - name: Install wasm-bindgen-cli
-        run: cargo install wasm-bindgen-cli wasm-opt
-      - name: Install wasm32 target
-        run: rustup target add wasm32-unknown-unknown
-      - name: run js tests
-        run: ./scripts/ci/wasm_tests
-      - name: run deno tests
-        run: ./scripts/ci/deno_tests
-  
   check_if_wasm_version_upgraded:
     name: Check if version has been upgraded
     runs-on: ubuntu-latest
-    needs: wasm_tests
     outputs:
       wasm_version: ${{ steps.version-updated.outputs.current-package-version }}
       wasm_has_updated: ${{ steps.version-updated.outputs.has-updated }}
@@ -35,14 +19,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_PATH: ${{ github.workspace }}/rust/automerge-wasm/package.json
-  
   publish-wasm:
     runs-on: ubuntu-latest
     needs:
       - check_if_wasm_version_upgraded
     # We create release only if the version in the package.json has been upgraded
-    if: |
-      needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated
+    if: needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated
     steps:
       - uses: actions/checkout@v3
         with:
@@ -56,8 +38,13 @@ jobs:
         run: cargo install wasm-bindgen-cli wasm-opt
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
-      - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm install
-      - run: yarn --cwd $GITHUB_WORKSPACE/rust/automerge-wasm run build
+      - name: run wasm js tests
+        id: wasm_js_tests
+        run: ./scripts/ci/wasm_tests
+      - name: run wasm deno tests
+        id: wasm_deno_tests
+        run: ./scripts/ci/deno_tests
+        if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
       - run: |
           mkdir $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/deno/* $GITHUB_WORKSPACE/deno_wasm_dist
