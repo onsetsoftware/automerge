@@ -29,6 +29,7 @@ jobs:
         with:
           action_name: is_package_json_version_upgraded
           branch: ${{ github.head_ref || github.ref }}/rust/automerge-wasm
+          owner: automerge
       - name: print-result
         env:
           OUTCOME: ${{join(steps.step1.outputs.*, '\n')}}
