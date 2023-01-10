@@ -43,6 +43,7 @@ jobs:
         run: ./scripts/ci/wasm_tests
       - name: run wasm deno tests
         id: wasm_deno_tests
+        uses: denoland/setup-deno@v1
         run: ./scripts/ci/deno_tests
       - name: Collate deno release files 
         if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
