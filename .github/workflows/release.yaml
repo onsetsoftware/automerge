@@ -8,33 +8,21 @@ on:
       - main
 
 jobs:
-  
-  check_if_version_upgraded:
-    name: Check if version upgrade
-    # We run this only if it's a push on the default branch or if it's a PR from a 
-    # branch (meaning not a PR from a fork). It would be more straightforward to test if secrets.NPM_TOKEN is 
-    # defined but GitHub Action don't allow it yet.
-#    if: |
-#      github.event_name == 'push' || 
-#      github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login 
+  wasm_tests:
+    name: Build and test WASM js and deno
     runs-on: ubuntu-latest
-    outputs:
-      from_version: ${{ steps.step1.outputs.from_version }}
-      to_version: ${{ steps.step1.outputs.to_version }}
-      is_upgraded_version: ${{ steps.step1.outputs.is_upgraded_version }}
-      is_pre_release: ${{steps.step1.outputs.is_pre_release }}
     steps:
-      - uses: garronej/ts-ci@v2.1.0
-        id: step1
-        with:
-          action_name: is_package_json_version_upgraded
-          branch: ${{ github.head_ref || github.ref }}/rust/automerge-wasm
-          owner: automerge
-      - name: print-result
-        env:
-          OUTCOME: ${{join(steps.step1.outputs.*, '\n')}}
-        run: |
-          echo "$OUTCOME"
+      - uses: actions/checkout@v2
+      - uses: denoland/setup-deno@v1
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli wasm-opt
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: run js tests
+        run: ./scripts/ci/wasm_tests
+      - name: run deno tests
+        run: ./scripts/ci/deno_tests
+  
   check_if_wasm_version_upgraded:
     name: Check if version upgrade
     # We run this only if it's a push on the default branch or if it's a PR from a 
@@ -44,6 +32,7 @@ jobs:
 #      github.event_name == 'push' || 
 #      github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login 
     runs-on: ubuntu-latest
+    needs: wasm_tests
     outputs:
       wasm_version: ${{ steps.version-updated.outputs.current-package-version }}
       wasm_has_updated: ${{ steps.version-updated.outputs.has-updated }}
