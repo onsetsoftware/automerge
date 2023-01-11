@@ -24,9 +24,10 @@ jobs:
     needs: check_if_wasm_version_upgraded
     runs-on: ubuntu-latest
     steps:
-      - run: |
-        echo "WASM version: $WASM_VERSION"
-        echo "WASM has updated: $WASM_HAS_UPDATED"
+      - name: Check output
+        run: |
+          echo "WASM version: $WASM_VERSION"
+          echo "WASM has updated: $WASM_HAS_UPDATED"
         env:
           WASM_VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
           WASM_HAS_UPDATED: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated }}
