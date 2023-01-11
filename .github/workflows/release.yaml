@@ -18,7 +18,6 @@ jobs:
           path: rust/automerge-wasm/package.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_PATH: rust/automerge-wasm/package.json
   publish-wasm:
     name: Publish WASM package
     runs-on: ubuntu-latest
