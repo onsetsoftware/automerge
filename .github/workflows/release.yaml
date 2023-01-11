@@ -51,6 +51,7 @@ jobs:
           mkdir $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/deno/* $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/index.d.ts $GITHUB_WORKSPACE/deno_wasm_dist
+          sed -i '1i /// <reference types="./index.d.ts" /> \n' $GITHUB_WORKSPACE/deno_wasm_dist/automerge_wasm.js
       - name: Create npm release
         if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
         run: |
@@ -89,6 +90,6 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Remove tmp_branch
-        run: git push origin :tmp_branch
+#      - name: Remove tmp_branch
+#        run: git push origin :tmp_branch
 
