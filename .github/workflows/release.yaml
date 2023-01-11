@@ -12,7 +12,7 @@ jobs:
       wasm_version: ${{ steps.version-updated.outputs.current-package-version }}
       wasm_has_updated: ${{ steps.version-updated.outputs.has-updated }}
     steps:
-      - uses: JiPaix/package-json-updated-action@v1.0.3
+      - uses: JiPaix/package-json-updated-action@v1.0.4
         id: version-updated
         with:
           path: rust/automerge-wasm/package.json
@@ -31,7 +31,8 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
-      - run: rm -r .github/workflows
+      - name: Get rid of local github workflows
+        run: rm -r .github/workflows
       - name: Remove tmp_branch if it exists
         run: git push origin :tmp_branch || true
       - run: git checkout -b tmp_branch
@@ -51,7 +52,7 @@ jobs:
           mkdir $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/deno/* $GITHUB_WORKSPACE/deno_wasm_dist
           cp $GITHUB_WORKSPACE/rust/automerge-wasm/index.d.ts $GITHUB_WORKSPACE/deno_wasm_dist
-          sed -i '1i /// <reference types="./index.d.ts" /> \n' $GITHUB_WORKSPACE/deno_wasm_dist/automerge_wasm.js
+          sed -i '1i /// <reference types="./index.d.ts" />' $GITHUB_WORKSPACE/deno_wasm_dist/automerge_wasm.js
       - name: Create npm release
         if: steps.wasm_js_tests.outcome == 'success' && steps.wasm_deno_tests.outcome == 'success'
         run: |
@@ -64,11 +65,11 @@ jobs:
             echo "Is pre-release version"
             EXTRA_ARGS="$EXTRA_ARGS --tag next"
           fi
-#          if [ "$NODE_AUTH_TOKEN" = "" ]; then
-#            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
-#            false
-#          fi
-#          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
+          if [ "$NODE_AUTH_TOKEN" = "" ]; then
+            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
+            false
+          fi
+          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
@@ -90,6 +91,6 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Remove tmp_branch
-#        run: git push origin :tmp_branch
+      - name: Remove tmp_branch
+        run: git push origin :tmp_branch
 
