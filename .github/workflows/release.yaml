@@ -18,12 +18,12 @@ jobs:
           path: rust/automerge-wasm/package.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_PATH: rust/automerge-wasm/package.json
   publish-wasm:
+    name: Publish WASM package
     runs-on: ubuntu-latest
     needs: check_if_wasm_version_upgraded
     # We create release only if the version in the package.json has been upgraded
-    if: needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated
+    if: needs.check_if_wasm_version_upgraded.outputs.wasm_has_updated == true
     steps:
       - name: Check output
         run: |
