@@ -71,11 +71,11 @@ jobs:
             echo "Is pre-release version"
             EXTRA_ARGS="$EXTRA_ARGS --tag next"
           fi
-          if [ "$NODE_AUTH_TOKEN" = "" ]; then
-            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
-            false
-          fi
-          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
+#          if [ "$NODE_AUTH_TOKEN" = "" ]; then
+#            echo "Can't publish on NPM, You need a NPM_TOKEN secret."
+#            false
+#          fi
+#          npm --prefix $GITHUB_WORKSPACE/rust/automerge-wasm publish $EXTRA_ARGS
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           VERSION: ${{ needs.check_if_wasm_version_upgraded.outputs.wasm_version }}
@@ -97,6 +97,6 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Remove tmp_branch
-        run: git push origin :tmp_branch
+#      - name: Remove tmp_branch
+#        run: git push origin :tmp_branch
 
